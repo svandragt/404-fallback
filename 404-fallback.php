@@ -44,6 +44,7 @@ function add_settings_menu() {
 		'menu_slug'  => __NAMESPACE__ . '\\page',
 		'page_title' => '404 Fallback Settings',
 		'menu_title' => '404 Fallback',
+		// TODO: using namespace here actually breaks it!
 		'action'     => __NAMESPACE__ . '\\page_update_handler',
 	] );
 
