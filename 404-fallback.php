@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name:     404 Fallback
  * Plugin URI:      PLUGIN SITE HERE
@@ -37,6 +38,7 @@ add_action( 'template_redirect', 'fb404_redirect_404' );
 function fb404_add_settings_menu() {
 	wpc_menu_register_page( [
 		'id'         => 'fb404',
+		'parent_slug' => 'plugins.php',
 		'menu_slug'  => 'fb404_page',
 		'page_title' => '404 Fallback Settings',
 		'menu_title' => '404 Fallback',
