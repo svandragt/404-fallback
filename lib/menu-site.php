@@ -89,6 +89,7 @@ function wpc_menu_register_settings( $menu_id, $grouped_settings ) {
  * The following keys are optional:
  *   - action: points to the function that will update the options instead
  *     of wpc_menu_page_update_handler()
+ *   - parent_slug: if the page belongs to another root page, for example 'plugins.php'
  *
  * @param $config
  */
