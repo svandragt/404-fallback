@@ -103,6 +103,10 @@ function fb404_setting_fallback_url_render() {
  * @return string Request URI.
  */
 function fb404_get_request() {
+	if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+		return '';
+	}
+
 	/**
 	 * Retrieve the Request URI. We use the server variable rather than `$wp->request` as we wish to retain the query
 	 * string parameters.
