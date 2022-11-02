@@ -17,7 +17,27 @@ require_once plugin_dir_path( __FILE__ ) . '/lib/menus.php';
 require_once plugin_dir_path( __FILE__ ) . '/lib/menu-site.php';
 
 function fb404_redirect_404() {
-	global $wp;
+	/**
+	 * Retrieve the Request URI. We use the server variable rather than `$wp->request` as we wish to retain the query
+	 * string parameters.
+	 */
+	$request = filter_var( $_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL );
+
+	/**
+	 * If the site is on a Multisite and is using a sub-folder, make sure to remove the site path from the URL before
+	 * redirecting. For sites that are mapped to domain, the path will be a single forward slash (/).
+	 */
+	if ( is_multisite() ) {
+		$site = get_site();
+		if ( ! empty( untrailingslashit( $site->path ) ) ) {
+			$request = str_ireplace( $site->path, '', $request );
+		}
+	}
+
+	/**
+	 * We remove the forward slash (/) at the prefix for predictability.
+	 */
+	$request = ltrim( $request, '/' );
 
 	$request = wp_unslash( $_SERVER['REQUEST_URI'] );
 	$url = stripslashes( get_option( 'fb404_setting_fallback_url' ));
