@@ -30,14 +30,13 @@ function fb404_redirect_404() {
 	$location  = trailingslashit( $url);
 	$location .= $request;
 
-	if ( is_404() && ! empty( $location ) ) {
-		$status        = 302;
-		$x_redirect_by = '404 Fallback';
-		wp_redirect( $location, $status, $x_redirect_by );
-		die;
-	}
+	$status        = 302;
+	$x_redirect_by = '404 Fallback';
+
+	wp_redirect( $location, $status, $x_redirect_by );
+	die;
 }
-add_action( 'template_redirect', 'fb404_redirect_404' );
+add_action( 'set_404', 'fb404_redirect_404' );
 
 /**
  * Add a site menu called Cluster
