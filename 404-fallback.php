@@ -19,18 +19,8 @@ require_once plugin_dir_path( __FILE__ ) . '/lib/menu-site.php';
 function fb404_redirect_404() {
 	$request = fb404_get_request();
 
-	/**
-	 * Get the URL setting and make sure it's a proper value.
-	 */
-	$original_url = strtolower( wp_unslash( get_option( 'fb404_setting_fallback_url', '' ) ) );
-
-	$url = wp_kses_bad_protocol( $original_url, [ 'http', 'https' ] );
-	if ( empty( $url ) || $original_url !== $url ) {
-		return;
-	}
-
-	$parsed_url = parse_url( $url );
-	if ( ! $parsed_url || empty( $parsed_url['host'] ) ) {
+	$url = fb404_validate_url( get_option( 'fb404_setting_fallback_url', '' ) );
+	if ( empty( $url ) ) {
 		return;
 	}
 
@@ -124,4 +114,32 @@ function fb404_get_request() {
 	 * We remove the forward slash (/) at the prefix for predictability.
 	 */
 	return ltrim( $request, '/' );
+}
+
+/**
+ * Validates a given URL.
+ *
+ * @param string $url URL to validate.
+ * @return string URL if valid. Empty string otherwise.
+ */
+function fb404_validate_url( $url = '' ) {
+	if ( empty( $url ) ) {
+		return '';
+	}
+
+	/**
+	 * Get the URL setting and make sure it's a proper value.
+	 */
+	$original_url = strtolower( wp_unslash( $url ) );
+	$url          = wp_kses_bad_protocol( $original_url, [ 'http', 'https' ] );
+	if ( empty( $url ) || $original_url !== $url ) {
+		return '';
+	}
+
+	$parsed_url = parse_url( $url );
+	if ( ! $parsed_url || empty( $parsed_url['host'] ) ) {
+		return '';
+	}
+
+	return $url;
 }
