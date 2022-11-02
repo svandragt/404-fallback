@@ -79,10 +79,21 @@ function fb404_page_update_handler() {
 }
 
 function fb404_setting_fallback_url_render() {
-	$option_name = 'fb404_setting_fallback_url';
-	$config      = stripslashes( get_option( $option_name ) );
-	printf( '<input name="%1$s" value="%2$s"
-	size="48"/>', $option_name, $config );
+	$config = wp_unslash( get_option( 'fb404_setting_fallback_url', '' ) );
+
+	echo wp_kses(
+		sprintf(
+			'<input name="fb404_setting_fallback_url" value="%1$s" size="48"/>',
+			esc_attr( $config )
+		),
+		[
+			'input' => [
+				'name'  => [],
+				'size'  => [],
+				'value' => [],
+			],
+		]
+	);
 }
 
 /**
