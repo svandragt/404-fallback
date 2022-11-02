@@ -83,14 +83,16 @@ function fb404_setting_fallback_url_render() {
 
 	echo wp_kses(
 		sprintf(
-			'<input name="fb404_setting_fallback_url" value="%1$s" size="48"/>',
+			'<input type="url" name="fb404_setting_fallback_url" value="%1$s" required size="48"/>',
 			esc_attr( $config )
 		),
 		[
 			'input' => [
-				'name'  => [],
-				'size'  => [],
-				'value' => [],
+				'name'     => [],
+				'required' => [],
+				'size'     => [],
+				'type'     => [],
+				'value'    => [],
 			],
 		]
 	);
