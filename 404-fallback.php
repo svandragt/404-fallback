@@ -17,28 +17,7 @@ require_once plugin_dir_path( __FILE__ ) . '/lib/menus.php';
 require_once plugin_dir_path( __FILE__ ) . '/lib/menu-site.php';
 
 function fb404_redirect_404() {
-	/**
-	 * Retrieve the Request URI. We use the server variable rather than `$wp->request` as we wish to retain the query
-	 * string parameters.
-	 */
-	$request = filter_var( $_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL );
-	$request = wp_unslash( $request );
-
-	/**
-	 * If the site is on a Multisite and is using a sub-folder, make sure to remove the site path from the URL before
-	 * redirecting. For sites that are mapped to domain, the path will be a single forward slash (/).
-	 */
-	if ( is_multisite() ) {
-		$site = get_site();
-		if ( ! empty( untrailingslashit( $site->path ) ) ) {
-			$request = str_ireplace( $site->path, '', $request );
-		}
-	}
-
-	/**
-	 * We remove the forward slash (/) at the prefix for predictability.
-	 */
-	$request = ltrim( $request, '/' );
+	$request = fb404_get_request();
 
 	/**
 	 * Get the URL setting and make sure it's a proper value.
@@ -61,14 +40,13 @@ function fb404_redirect_404() {
 	$location  = trailingslashit( $url);
 	$location .= $request;
 
-	if ( is_404() && !empty( $location ) ) {
+	if ( is_404() && ! empty( $location ) ) {
 		$status        = 302;
 		$x_redirect_by = '404 Fallback';
 		wp_redirect( $location, $status, $x_redirect_by );
-		die();
+		die;
 	}
 }
-
 add_action( 'template_redirect', 'fb404_redirect_404' );
 
 /**
@@ -115,4 +93,35 @@ function fb404_setting_fallback_url_render() {
 	$config      = stripslashes( get_option( $option_name ) );
 	printf( '<input name="%1$s" value="%2$s"
 	size="48"/>', $option_name, $config );
+}
+
+/**
+ * Retrieves a sanitized version of the Request URI. If the request was made on a sub-folder multisite with an unmapped
+ * domain, then it will remove the sub-folder from the request.
+ *
+ * @return string Request URI.
+ */
+function fb404_get_request() {
+	/**
+	 * Retrieve the Request URI. We use the server variable rather than `$wp->request` as we wish to retain the query
+	 * string parameters.
+	 */
+	$request = filter_var( $_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL );
+	$request = wp_unslash( $request );
+
+	/**
+	 * If the site is on a Multisite and is using a sub-folder, make sure to remove the site path from the URL before
+	 * redirecting. For sites that are mapped to domain, the path will be a single forward slash (/).
+	 */
+	if ( is_multisite() ) {
+		$site = get_site();
+		if ( ! empty( untrailingslashit( $site->path ) ) ) {
+			$request = str_ireplace( $site->path, '', $request );
+		}
+	}
+
+	/**
+	 * We remove the forward slash (/) at the prefix for predictability.
+	 */
+	return ltrim( $request, '/' );
 }
