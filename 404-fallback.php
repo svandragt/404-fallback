@@ -22,6 +22,7 @@ function fb404_redirect_404() {
 	 * string parameters.
 	 */
 	$request = filter_var( $_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL );
+	$request = wp_unslash( $request );
 
 	/**
 	 * If the site is on a Multisite and is using a sub-folder, make sure to remove the site path from the URL before
@@ -39,10 +40,28 @@ function fb404_redirect_404() {
 	 */
 	$request = ltrim( $request, '/' );
 
-	$request = wp_unslash( $_SERVER['REQUEST_URI'] );
-	$url = stripslashes( get_option( 'fb404_setting_fallback_url' ));
-	if ( is_404() && !empty($url) ) {
-		$location      =  $url . $request;
+	/**
+	 * Get the URL setting and make sure it's a proper value.
+	 */
+	$original_url = strtolower( wp_unslash( get_option( 'fb404_setting_fallback_url', '' ) ) );
+
+	$url = wp_kses_bad_protocol( $original_url, [ 'http', 'https' ] );
+	if ( empty( $url ) || $original_url !== $url ) {
+		return;
+	}
+
+	$parsed_url = parse_url( $url );
+	if ( ! $parsed_url || empty( $parsed_url['host'] ) ) {
+		return;
+	}
+
+	/**
+	 * We make sure this URL has a trailing slash, as we removed it from the Request.
+	 */
+	$location  = trailingslashit( $url);
+	$location .= $request;
+
+	if ( is_404() && !empty( $location ) ) {
 		$status        = 302;
 		$x_redirect_by = '404 Fallback';
 		wp_redirect( $location, $status, $x_redirect_by );
