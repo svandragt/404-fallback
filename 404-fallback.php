@@ -17,6 +17,13 @@ require_once plugin_dir_path( __FILE__ ) . '/lib/menus.php';
 require_once plugin_dir_path( __FILE__ ) . '/lib/menu-site.php';
 
 function fb404_redirect_404() {
+	/**
+	 * We only want to handle 404 requests.
+	 */
+	if ( ! is_404() ) {
+		return;
+	}
+
 	$request = fb404_get_request();
 
 	$url = fb404_validate_url( get_option( 'fb404_setting_fallback_url', '' ) );
@@ -36,7 +43,7 @@ function fb404_redirect_404() {
 	wp_redirect( $location, $status, $x_redirect_by );
 	die;
 }
-add_action( 'set_404', 'fb404_redirect_404' );
+add_action( 'template_redirect', 'fb404_redirect_404' );
 
 /**
  * Add a site menu called Cluster
