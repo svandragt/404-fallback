@@ -17,19 +17,32 @@ require_once plugin_dir_path( __FILE__ ) . '/lib/menus.php';
 require_once plugin_dir_path( __FILE__ ) . '/lib/menu-site.php';
 
 function fb404_redirect_404() {
-	global $wp;
-
-	$request = wp_unslash( $_SERVER['REQUEST_URI'] );
-	$url = stripslashes( get_option( 'fb404_setting_fallback_url' ));
-	if ( is_404() && !empty($url) ) {
-		$location      =  $url . $request;
-		$status        = 302;
-		$x_redirect_by = '404 Fallback';
-		wp_redirect( $location, $status, $x_redirect_by );
-		die();
+	/**
+	 * We only want to handle 404 requests.
+	 */
+	if ( ! is_404() ) {
+		return;
 	}
-}
 
+	$request = fb404_get_request();
+
+	$url = fb404_validate_url( get_option( 'fb404_setting_fallback_url', '' ) );
+	if ( empty( $url ) ) {
+		return;
+	}
+
+	/**
+	 * We make sure this URL has a trailing slash, as we removed it from the Request.
+	 */
+	$location  = trailingslashit( $url);
+	$location .= $request;
+
+	$status        = 302;
+	$x_redirect_by = '404 Fallback';
+
+	wp_redirect( $location, $status, $x_redirect_by );
+	die;
+}
 add_action( 'template_redirect', 'fb404_redirect_404' );
 
 /**
@@ -72,8 +85,84 @@ function fb404_page_update_handler() {
 }
 
 function fb404_setting_fallback_url_render() {
-	$option_name = 'fb404_setting_fallback_url';
-	$config      = stripslashes( get_option( $option_name ) );
-	printf( '<input name="%1$s" value="%2$s"
-	size="48"/>', $option_name, $config );
+	$config = wp_unslash( get_option( 'fb404_setting_fallback_url', '' ) );
+
+	echo wp_kses(
+		sprintf(
+			'<input type="url" name="fb404_setting_fallback_url" value="%1$s" required size="48"/>',
+			esc_attr( $config )
+		),
+		[
+			'input' => [
+				'name'     => [],
+				'required' => [],
+				'size'     => [],
+				'type'     => [],
+				'value'    => [],
+			],
+		]
+	);
+}
+
+/**
+ * Retrieves a sanitized version of the Request URI. If the request was made on a sub-folder multisite with an unmapped
+ * domain, then it will remove the sub-folder from the request.
+ *
+ * @return string Request URI.
+ */
+function fb404_get_request() {
+	if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+		return '';
+	}
+
+	/**
+	 * Retrieve the Request URI. We use the server variable rather than `$wp->request` as we wish to retain the query
+	 * string parameters.
+	 */
+	$request = filter_var( $_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL );
+	$request = wp_unslash( $request );
+
+	/**
+	 * If the site is on a Multisite and is using a sub-folder, make sure to remove the site path from the URL before
+	 * redirecting. For sites that are mapped to domain, the path will be a single forward slash (/).
+	 */
+	if ( is_multisite() ) {
+		$site = get_site();
+		if ( ! empty( untrailingslashit( $site->path ) ) ) {
+			$request = str_ireplace( $site->path, '', $request );
+		}
+	}
+
+	/**
+	 * We remove the forward slash (/) at the prefix for predictability.
+	 */
+	return ltrim( $request, '/' );
+}
+
+/**
+ * Validates a given URL.
+ *
+ * @param string $url URL to validate.
+ * @return string URL if valid. Empty string otherwise.
+ */
+function fb404_validate_url( $url = '' ) {
+	if ( empty( $url ) ) {
+		return '';
+	}
+
+	/**
+	 * Get the URL setting and make sure it's a proper value.
+	 */
+	$original_url = strtolower( wp_unslash( $url ) );
+	$url          = wp_kses_bad_protocol( $original_url, [ 'http', 'https' ] );
+	if ( empty( $url ) || $original_url !== $url ) {
+		return '';
+	}
+
+	$parsed_url = parse_url( $url );
+	if ( ! $parsed_url || empty( $parsed_url['host'] ) ) {
+		return '';
+	}
+
+	return $url;
 }
